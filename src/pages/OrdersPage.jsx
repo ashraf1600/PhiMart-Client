@@ -8,89 +8,49 @@ const OrdersPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOrders();
+    const fetch = async () => {
+      try {
+        const data = await orderService.getAll();
+        setOrders(data.results || data || []);
+      } catch { toast.error('Failed to load orders'); } finally { setLoading(false); }
+    };
+    fetch();
   }, []);
 
-  const fetchOrders = async () => {
-    try {
-      const data = await orderService.getAll();
-      setOrders(data.results || data || []);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast.error('Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
+  const statusColor = (s) => {
+    const map = {
       'Not Paid': 'bg-yellow-100 text-yellow-800',
       'Ready to Ship': 'bg-blue-100 text-blue-800',
       'Shipped': 'bg-purple-100 text-purple-800',
       'Delivered': 'bg-green-100 text-green-800',
       'Canceled': 'bg-red-100 text-red-800',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return map[s] || 'bg-gray-100';
   };
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      'Not Paid': '⏳',
-      'Ready to Ship': '📦',
-      'Shipped': '🚚',
-      'Delivered': '✅',
-      'Canceled': '❌',
-    };
-    return icons[status] || '📋';
-  };
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
-  }
+  if (loading) return <div className="flex justify-center items-center h-64">Loading...</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">My Orders</h1>
-      
+    <div className="container mx-auto px-6 py-12">
+      <h1 className="text-3xl font-heading mb-8">Order History</h1>
       {orders.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📋</div>
-          <p className="text-gray-500 mb-4">You haven't placed any orders yet.</p>
-          <Link to="/products" className="btn-primary inline-block">
-            Start Shopping
-          </Link>
+          <p className="text-gray-500">No orders yet.</p>
+          <Link to="/products" className="btn-primary mt-4 inline-block">Start Shopping</Link>
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          {orders.map(o => (
+            <div key={o.id} className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex flex-wrap justify-between items-center">
                 <div>
-                  <p className="text-sm text-gray-500">Order #{order.id}</p>
-                  <p className="text-sm text-gray-500">
-                    Placed on {new Date(order.created_at).toLocaleDateString()}
-                  </p>
+                  <p className="text-sm text-gray-500">Order #{o.id.slice(0,8)}</p>
+                  <p className="text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString()}</p>
                 </div>
-                <div className="mt-2 md:mt-0">
-                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
-                    {getStatusIcon(order.status)} {order.status || 'Not Paid'}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="border-t pt-4">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                  <div>
-                    <p className="font-semibold">Total Amount:</p>
-                    <p className="text-xl font-bold text-blue-600">${order.total_price}</p>
-                    {order.items && (
-                      <p className="text-sm text-gray-500">{order.items.length} item(s)</p>
-                    )}
-                  </div>
-                  <Link to={`/orders/${order.id}`} className="btn-secondary mt-2 md:mt-0">
-                    View Details
-                  </Link>
+                <div className="flex items-center gap-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(o.status)}`}>{o.status}</span>
+                  <span className="font-bold">${o.total_price}</span>
+                  <Link to={`/orders/${o.id}`} className="text-[#b8a28c] hover:underline text-sm">View</Link>
                 </div>
               </div>
             </div>

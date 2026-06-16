@@ -7,11 +7,12 @@ import toast from 'react-hot-toast';
 
 const ProductListPage = () => {
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // store unfiltered products
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { addToCart } = useCart();
-  
+
   const categoryId = searchParams.get('category');
   const search = searchParams.get('search');
 
@@ -27,16 +28,33 @@ const ProductListPage = () => {
       if (categoryId) params.category = categoryId;
       if (search) params.search = search;
       
+      console.log('Fetching products with params:', params); // Debug log
+
       const data = await productService.getAll(params);
-      const productsData = data.results || data;
-      
-      // Normalize products for display
-      productsData.forEach(product => {
-        product.display_image = product.main_image || (product.images?.[0]?.image) || product.images?.[0] || null;
-        product.in_stock = product.stock > 0;
+      let items = data.results || data;
+
+      // Normalize images
+      items.forEach(p => {
+        p.display_image = p.main_image || p.images?.[0]?.image || null;
+        p.in_stock = p.stock > 0;
       });
-      
-      setProducts(productsData);
+
+      // Store all products for potential client-side filtering
+      setAllProducts(items);
+
+      // If backend filtering is not working, we'll filter on client side as fallback
+      let filtered = items;
+      if (categoryId) {
+        // Client-side filter by category (fallback)
+        filtered = items.filter(p => p.category == categoryId);
+      }
+      if (search) {
+        filtered = filtered.filter(p =>
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.description?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      setProducts(filtered);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
@@ -63,92 +81,86 @@ const ProductListPage = () => {
     }
   };
 
+  const clearFilter = () => {
+    setSearchParams({});
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">All Products</h1>
-      
+    <div className="container mx-auto px-6 py-12">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-heading">Shop</h1>
+        {categoryId && (
+          <button onClick={clearFilter} className="text-sm text-[#b8a28c] hover:underline">
+            Clear Filter
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar with categories */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-4 rounded-lg shadow-md sticky top-20">
-            <h3 className="text-lg font-semibold mb-4">Categories</h3>
+          <div className="bg-white p-6 rounded-xl shadow-sm sticky top-20">
+            <h3 className="font-semibold text-sm uppercase tracking-wider mb-4">Categories</h3>
             <div className="space-y-2">
-              <Link to="/products" className="block text-gray-600 hover:text-blue-600">
-                All Products
+              <Link
+                to="/products"
+                className={`block hover:text-[#b8a28c] ${!categoryId ? 'text-[#b8a28c] font-medium' : 'text-gray-600'}`}
+              >
+                All
               </Link>
-              {categories.map((category) => (
+              {categories.map((cat) => (
                 <Link
-                  key={category.id}
-                  to={`/products?category=${category.id}`}
-                  className={`block text-gray-600 hover:text-blue-600 ${
-                    categoryId == category.id ? 'text-blue-600 font-semibold' : ''
+                  key={cat.id}
+                  to={`/products?category=${cat.id}`}
+                  className={`block hover:text-[#b8a28c] ${
+                    categoryId == cat.id ? 'text-[#b8a28c] font-medium' : 'text-gray-600'
                   }`}
                 >
-                  {category.name} <span className="text-xs text-gray-400">({category.product_count})</span>
+                  {cat.name} <span className="text-xs text-gray-400">({cat.product_count || 0})</span>
                 </Link>
               ))}
             </div>
           </div>
         </div>
-        
+
+        {/* Products grid */}
         <div className="lg:col-span-3">
           {products.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No products found.</p>
+              <p className="text-gray-500">No products found in this category.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.map((product) => (
-                <div key={product.id} className="card group">
+                <div key={product.id} className="product-card group">
                   <Link to={`/products/${product.id}`}>
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden relative">
+                    <div className="relative overflow-hidden">
                       {product.display_image ? (
-                        <img 
-                          src={product.display_image} 
-                          alt={product.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="%23999999"%3E%3Crect x="2" y="2" width="20" height="20" rx="2"%3E%3C/rect%3E%3Cpath d="M7 2v20M17 2v20M2 12h20"%3E%3C/path%3E%3C/svg%3E';
-                          }}
-                        />
+                        <img src={product.display_image} alt={product.name} />
                       ) : (
-                        <div className="text-6xl">📦</div>
-                      )}
-                      {product.in_stock === false && (
-                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
-                          Out of Stock
-                        </div>
+                        <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-4xl">👕</div>
                       )}
                     </div>
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-blue-600">
-                      {product.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xl font-bold text-blue-600">${product.price}</p>
-                        {product.price_with_tax && (
-                          <p className="text-xs text-gray-500">With tax: ${product.price_with_tax}</p>
-                        )}
-                      </div>
-                      {product.in_stock && (
-                        <span className="text-xs text-green-500">In Stock</span>
-                      )}
+                    <div className="p-4">
+                      <h3 className="font-heading text-lg font-semibold truncate">{product.name}</h3>
+                      <p className="text-sm text-gray-500">{product.category_name}</p>
+                      <p className="text-xl font-bold mt-2">${product.price}</p>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product.id);
+                        }}
+                        className="mt-3 w-full bg-[#1a1a1a] text-white py-2 rounded-full text-sm hover:bg-[#b8a28c] transition"
+                      >
+                        Add to Cart
+                      </button>
                     </div>
                   </Link>
-                  <button
-                    onClick={() => handleAddToCart(product.id)}
-                    disabled={!product.in_stock}
-                    className={`w-full mt-3 btn-primary ${!product.in_stock ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
-                  </button>
                 </div>
               ))}
             </div>

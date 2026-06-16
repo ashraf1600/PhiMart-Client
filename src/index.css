@@ -2,28 +2,76 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f5f0;
+    color: #1a1a1a;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 0.02em;
+  }
+  /* scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f0ebe5;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #b8a28c;
+    border-radius: 10px;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200;
+    @apply bg-[#1a1a1a] text-white px-8 py-3 rounded-full hover:bg-[#b8a28c] transition duration-300 text-sm font-semibold tracking-wide;
   }
-  
   .btn-secondary {
-    @apply bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200;
+    @apply bg-transparent border-2 border-[#1a1a1a] text-[#1a1a1a] px-8 py-3 rounded-full hover:bg-[#1a1a1a] hover:text-white transition duration-300 text-sm font-semibold tracking-wide;
   }
-  
-  .btn-danger {
-    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200;
+  .product-card {
+    @apply bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300;
   }
-  
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  .product-card img {
+    @apply w-full h-64 object-cover transition duration-500 group-hover:scale-105;
   }
-  
-  .card {
-    @apply bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow duration-200;
+  .category-card {
+    @apply relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition duration-300 cursor-pointer;
+  }
+  .category-card img {
+    @apply w-full h-56 object-cover;
+  }
+  .category-card .overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6;
+  }
+  .category-card .overlay span {
+    @apply text-white text-xl;
+    font-family: 'Playfair Display', serif;
+  }
+  .navbar {
+    @apply fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-white/90 backdrop-blur-sm;
+  }
+  .navbar.scrolled {
+    @apply shadow-md;
+  }
+  .nav-link {
+    @apply text-[#1a1a1a] hover:text-[#b8a28c] transition font-medium text-sm tracking-wide;
+  }
+  .nav-btn {
+    @apply bg-[#1a1a1a] text-white px-5 py-2 rounded-full hover:bg-[#b8a28c] transition text-sm font-medium;
+  }
+  .footer-link {
+    @apply text-sm text-[#1a1a1a]/60 hover:text-[#b8a28c] transition;
+  }
+}
+
+/* Optional: define custom utilities if you want to use in className */
+@layer utilities {
+  .font-heading {
+    font-family: 'Playfair Display', serif;
+  }
+  .font-body {
+    font-family: 'Inter', sans-serif;
   }
 }

@@ -13,81 +13,32 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
     try {
       await login(email, password);
-      toast.success('Login successful!');
+      toast.success('Welcome back!');
       navigate('/');
-    } catch (error) {
-      toast.error('Invalid email or password');
-      console.error('Login error:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch {
+      toast.error('Invalid credentials');
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Sign in to PhiMart
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field mt-1"
-                placeholder="you@example.com"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="input-field mt-1"
-                placeholder="••••••••"
-              />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8f5f0] py-12">
+      <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md">
+        <h2 className="text-3xl font-heading text-center mb-6">Welcome Back!</h2>
+        <p className="text-center text-sm text-gray-500 mb-8">Login here:</p>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Your email</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter email address" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#b8a28c]" required />
           </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-1">Your password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#b8a28c]" required />
           </div>
+          <button type="submit" disabled={loading} className="w-full bg-[#1a1a1a] text-white py-3 rounded-full hover:bg-[#b8a28c] transition disabled:opacity-50">Login</button>
         </form>
+        <p className="text-center text-sm mt-6">Don't have an account? <Link to="/register" className="text-[#b8a28c] hover:underline">Register now.</Link></p>
       </div>
     </div>
   );

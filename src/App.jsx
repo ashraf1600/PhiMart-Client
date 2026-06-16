@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 import HomePage from './pages/HomePage';
 import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -15,49 +16,34 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import { Toaster } from 'react-hot-toast';
 
-const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
-  return user ? children : <Navigate to="/login" />;
+const PrivateRoute = ({ children, adminOnly = false }) => {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
+  if (adminOnly && !isAdmin) return <Navigate to="/" />;
+  return children;
 };
 
 function AppRoutes() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#f8f5f0] pt-16">
       <Toaster position="top-right" />
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={
-            <PrivateRoute>
-              <CheckoutPage />
-            </PrivateRoute>
-          } />
-          <Route path="/orders" element={
-            <PrivateRoute>
-              <OrdersPage />
-            </PrivateRoute>
-          } />
-          <Route path="/orders/:id" element={
-            <PrivateRoute>
-              <OrderDetailPage />
-            </PrivateRoute>
-          } />
-          <Route path="/profile" element={
-            <PrivateRoute>
-              <ProfilePage />
-            </PrivateRoute>
-          } />
+          <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+          <Route path="/orders" element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+          <Route path="/orders/:id" element={<PrivateRoute><OrderDetailPage /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
