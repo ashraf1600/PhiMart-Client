@@ -14,6 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
+          setIsAdmin(userData.is_staff || userData.is_superuser || false);
         } catch (error) {
           console.error('Failed to load user:', error);
           localStorage.removeItem('access_token');
@@ -34,10 +36,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const data = await authService.login(email, password);
+    await authService.login(email, password);
     const userData = await authService.getCurrentUser();
     setUser(userData);
-    return data;
+    setIsAdmin(userData.is_staff || userData.is_superuser || false);
+    return userData;
   };
 
   const register = async (userData) => {
@@ -48,11 +51,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     authService.logout();
     setUser(null);
+    setIsAdmin(false);
   };
 
   const updateUser = async (userData) => {
     const updatedUser = await authService.updateProfile(userData);
     setUser(updatedUser);
+    setIsAdmin(updatedUser.is_staff || updatedUser.is_superuser || false);
     return updatedUser;
   };
 
@@ -68,7 +73,8 @@ export const AuthProvider = ({ children }) => {
       logout, 
       updateUser, 
       changePassword,
-      loading 
+      loading,
+      isAdmin
     }}>
       {children}
     </AuthContext.Provider>

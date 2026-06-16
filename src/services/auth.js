@@ -38,6 +38,11 @@ export const authService = {
     return response.data;
   },
   
+  activateAccount: async (uid, token) => {
+    const response = await api.post('/auth/users/activation/', { uid, token });
+    return response.data;
+  },
+  
   resetPassword: async (email) => {
     const response = await api.post('/auth/users/reset_password/', { email });
     return response.data;

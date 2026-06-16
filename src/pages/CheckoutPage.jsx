@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { orderService } from '../services/order';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    full_name: '',
-    address: '',
-    city: '',
-    postal_code: '',
-    phone: '',
+    address: user?.address || '',
+    phone_number: user?.phone_number || '',
+    notes: '',
   });
 
   const handleChange = (e) => {
@@ -28,15 +28,19 @@ const CheckoutPage = () => {
     setLoading(true);
     
     try {
+      // Get the cart ID from localStorage or context
+      const cartId = localStorage.getItem('cart_id');
+      if (!cartId) {
+        toast.error('Cart not found');
+        return;
+      }
+      
+      // Create order
       const orderData = {
-        items: cartItems.map(item => ({
-          product: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price
-        })),
-        total_amount: cartTotal,
-        shipping_address: `${formData.address}, ${formData.city}, ${formData.postal_code}`,
-        ...formData
+        cart_id: cartId,
+        address: formData.address,
+        phone_number: formData.phone_number,
+        notes: formData.notes,
       };
       
       await orderService.create(orderData);
@@ -44,8 +48,18 @@ const CheckoutPage = () => {
       toast.success('Order placed successfully!');
       navigate('/orders');
     } catch (error) {
-      toast.error('Failed to place order');
       console.error('Checkout error:', error);
+      if (error.response?.data) {
+        const errData = error.response.data;
+        if (typeof errData === 'object') {
+          const msgs = Object.values(errData).flat().join(' ');
+          toast.error(msgs || 'Failed to place order');
+        } else {
+          toast.error(errData);
+        }
+      } else {
+        toast.error('Failed to place order');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,9 +86,21 @@ const CheckoutPage = () => {
                   type="text"
                   name="full_name"
                   required
-                  value={formData.full_name}
-                  onChange={handleChange}
-                  className="input-field"
+                  value={`${user?.first_name || ''} ${user?.last_name || ''}`}
+                  className="input-field bg-gray-50"
+                  readOnly
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={user?.email || ''}
+                  className="input-field bg-gray-50"
+                  readOnly
                 />
               </div>
               
@@ -87,30 +113,7 @@ const CheckoutPage = () => {
                   value={formData.address}
                   onChange={handleChange}
                   className="input-field"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-1">City *</label>
-                <input
-                  type="text"
-                  name="city"
-                  required
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="input-field"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-1">Postal Code *</label>
-                <input
-                  type="text"
-                  name="postal_code"
-                  required
-                  value={formData.postal_code}
-                  onChange={handleChange}
-                  className="input-field"
+                  placeholder="123 Main St, City, State, ZIP"
                 />
               </div>
               
@@ -118,11 +121,24 @@ const CheckoutPage = () => {
                 <label className="block text-gray-700 mb-1">Phone Number *</label>
                 <input
                   type="tel"
-                  name="phone"
+                  name="phone_number"
                   required
-                  value={formData.phone}
+                  value={formData.phone_number}
                   onChange={handleChange}
                   className="input-field"
+                  placeholder="+1234567890"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-1">Order Notes (Optional)</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  rows="3"
+                  className="input-field"
+                  placeholder="Special instructions for delivery..."
                 />
               </div>
             </div>
@@ -141,15 +157,20 @@ const CheckoutPage = () => {
           <div className="bg-gray-50 p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-bold mb-4">Order Summary</h2>
             {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between mb-2">
-                <span>{item.product.name} x {item.quantity}</span>
-                <span>${(item.product.price * item.quantity).toFixed(2)}</span>
+              <div key={item.id} className="flex justify-between mb-2 pb-2 border-b">
+                <div>
+                  <span className="font-medium">{item.product?.name}</span>
+                  <span className="text-sm text-gray-500 block">Qty: {item.quantity}</span>
+                </div>
+                <span className="font-semibold">
+                  ${(item.product?.price * item.quantity).toFixed(2)}
+                </span>
               </div>
             ))}
             <div className="border-t pt-4 mt-4">
               <div className="flex justify-between font-bold text-lg">
                 <span>Total:</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span className="text-blue-600">${cartTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>

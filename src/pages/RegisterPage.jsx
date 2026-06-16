@@ -7,7 +7,11 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    re_password: ''
+    re_password: '',
+    first_name: '',
+    last_name: '',
+    address: '',
+    phone_number: ''
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,18 +31,28 @@ const RegisterPage = () => {
       return;
     }
     
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      await authService.register({
-        email: formData.email,
-        password: formData.password
-      });
+      // Remove re_password before sending
+      const { re_password, ...userData } = formData;
+      await authService.register(userData);
       toast.success('Registration successful! Please login.');
       navigate('/login');
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
       console.error('Registration error:', error);
+      if (error.response?.data?.email) {
+        toast.error(error.response.data.email[0]);
+      } else if (error.response?.data?.password) {
+        toast.error(error.response.data.password[0]);
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -59,11 +73,11 @@ const RegisterPage = () => {
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                Email address *
               </label>
               <input
                 id="email"
@@ -78,9 +92,70 @@ const RegisterPage = () => {
               />
             </div>
             
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className="input-field mt-1"
+                  placeholder="John"
+                />
+              </div>
+              <div>
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className="input-field mt-1"
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                Address
+              </label>
+              <input
+                id="address"
+                name="address"
+                type="text"
+                value={formData.address}
+                onChange={handleChange}
+                className="input-field mt-1"
+                placeholder="123 Main St, City"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                id="phone_number"
+                name="phone_number"
+                type="tel"
+                value={formData.phone_number}
+                onChange={handleChange}
+                className="input-field mt-1"
+                placeholder="+1234567890"
+              />
+            </div>
+            
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                Password *
               </label>
               <input
                 id="password"
@@ -97,7 +172,7 @@ const RegisterPage = () => {
             
             <div>
               <label htmlFor="re_password" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                Confirm Password *
               </label>
               <input
                 id="re_password"

@@ -9,6 +9,8 @@ const ProfilePage = () => {
     email: user?.email || '',
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
+    address: user?.address || '',
+    phone_number: user?.phone_number || '',
   });
   const [passwordData, setPasswordData] = useState({
     current_password: '',
@@ -25,6 +27,7 @@ const ProfilePage = () => {
       toast.success('Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
+      console.error('Update error:', error);
       toast.error('Failed to update profile');
     } finally {
       setLoading(false);
@@ -35,6 +38,10 @@ const ProfilePage = () => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.confirm_password) {
       toast.error('New passwords do not match');
+      return;
+    }
+    if (passwordData.new_password.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     
@@ -74,38 +81,60 @@ const ProfilePage = () => {
             <form onSubmit={handleProfileUpdate}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-1">Email</label>
+                  <label className="block text-gray-700 mb-1">Email *</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="input-field"
                     required
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-700 mb-1">First Name</label>
+                    <input
+                      type="text"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">First Name</label>
+                  <label className="block text-gray-700 mb-1">Address</label>
                   <input
                     type="text"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="input-field"
+                    placeholder="123 Main St, City"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-1">Last Name</label>
+                  <label className="block text-gray-700 mb-1">Phone Number</label>
                   <input
-                    type="text"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="tel"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                    className="input-field"
+                    placeholder="+1234567890"
                   />
                 </div>
                 <div className="flex space-x-4">
-                  <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  <button type="submit" disabled={loading} className="btn-primary flex-1">
                     Save Changes
                   </button>
-                  <button type="button" onClick={() => setIsEditing(false)} className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                  <button type="button" onClick={() => setIsEditing(false)} className="btn-secondary flex-1">
                     Cancel
                   </button>
                 </div>
@@ -115,6 +144,8 @@ const ProfilePage = () => {
             <div className="space-y-3">
               <p><strong>Email:</strong> {user?.email}</p>
               <p><strong>Name:</strong> {user?.first_name} {user?.last_name}</p>
+              <p><strong>Address:</strong> {user?.address || 'Not provided'}</p>
+              <p><strong>Phone:</strong> {user?.phone_number || 'Not provided'}</p>
               <p><strong>Member since:</strong> {user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : 'N/A'}</p>
             </div>
           )}
@@ -126,36 +157,36 @@ const ProfilePage = () => {
           <form onSubmit={handlePasswordChange}>
             <div className="space-y-4">
               <div>
-                <label className="block text-gray-700 mb-1">Current Password</label>
+                <label className="block text-gray-700 mb-1">Current Password *</label>
                 <input
                   type="password"
                   value={passwordData.current_password}
                   onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-field"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 mb-1">New Password</label>
+                <label className="block text-gray-700 mb-1">New Password *</label>
                 <input
                   type="password"
                   value={passwordData.new_password}
                   onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-field"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 mb-1">Confirm New Password</label>
+                <label className="block text-gray-700 mb-1">Confirm New Password *</label>
                 <input
                   type="password"
                   value={passwordData.confirm_password}
                   onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="input-field"
                   required
                 />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              <button type="submit" disabled={loading} className="w-full btn-primary">
                 Change Password
               </button>
             </div>

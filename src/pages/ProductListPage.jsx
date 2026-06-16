@@ -28,7 +28,15 @@ const ProductListPage = () => {
       if (search) params.search = search;
       
       const data = await productService.getAll(params);
-      setProducts(data.results || data);
+      const productsData = data.results || data;
+      
+      // Normalize products for display
+      productsData.forEach(product => {
+        product.display_image = product.main_image || (product.images?.[0]?.image) || product.images?.[0] || null;
+        product.in_stock = product.stock > 0;
+      });
+      
+      setProducts(productsData);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
@@ -64,9 +72,8 @@ const ProductListPage = () => {
       <h1 className="text-3xl font-bold mb-8">All Products</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar with categories */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-4 rounded-lg shadow-md">
+          <div className="bg-white p-4 rounded-lg shadow-md sticky top-20">
             <h3 className="text-lg font-semibold mb-4">Categories</h3>
             <div className="space-y-2">
               <Link to="/products" className="block text-gray-600 hover:text-blue-600">
@@ -80,14 +87,13 @@ const ProductListPage = () => {
                     categoryId == category.id ? 'text-blue-600 font-semibold' : ''
                   }`}
                 >
-                  {category.name}
+                  {category.name} <span className="text-xs text-gray-400">({category.product_count})</span>
                 </Link>
               ))}
             </div>
           </div>
         </div>
         
-        {/* Products grid */}
         <div className="lg:col-span-3">
           {products.length === 0 ? (
             <div className="text-center py-12">
@@ -98,28 +104,50 @@ const ProductListPage = () => {
               {products.map((product) => (
                 <div key={product.id} className="card group">
                   <Link to={`/products/${product.id}`}>
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                      {product.images?.[0] ? (
-                        <img src={product.images[0].image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                    <div className="aspect-square bg-gray-100 rounded-lg mb-4 flex items-center justify-center overflow-hidden relative">
+                      {product.display_image ? (
+                        <img 
+                          src={product.display_image} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="%23999999"%3E%3Crect x="2" y="2" width="20" height="20" rx="2"%3E%3C/rect%3E%3Cpath d="M7 2v20M17 2v20M2 12h20"%3E%3C/path%3E%3C/svg%3E';
+                          }}
+                        />
                       ) : (
                         <div className="text-6xl">📦</div>
                       )}
+                      {product.in_stock === false && (
+                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+                          Out of Stock
+                        </div>
+                      )}
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 group-hover:text-blue-600">
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-blue-600">
                       {product.name}
                     </h3>
                     <p className="text-gray-600 text-sm mb-2 line-clamp-2">
                       {product.description}
                     </p>
-                    <p className="text-xl font-bold text-blue-600 mb-4">
-                      ${product.price}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xl font-bold text-blue-600">${product.price}</p>
+                        {product.price_with_tax && (
+                          <p className="text-xs text-gray-500">With tax: ${product.price_with_tax}</p>
+                        )}
+                      </div>
+                      {product.in_stock && (
+                        <span className="text-xs text-green-500">In Stock</span>
+                      )}
+                    </div>
                   </Link>
                   <button
                     onClick={() => handleAddToCart(product.id)}
-                    className="w-full btn-primary"
+                    disabled={!product.in_stock}
+                    className={`w-full mt-3 btn-primary ${!product.in_stock ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    Add to Cart
+                    {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
                   </button>
                 </div>
               ))}
