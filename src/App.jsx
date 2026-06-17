@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import HomePage from './pages/HomePage';
@@ -14,14 +15,13 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
+import WishlistPage from './pages/WishlistPage';
 import { Toaster } from 'react-hot-toast';
 
-const PrivateRoute = ({ children, adminOnly = false }) => {
-  const { user, loading, isAdmin } = useAuth();
+const PrivateRoute = ({ children }) => {
+  const { user, loading } = useAuth();
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" />;
-  return children;
+  return user ? children : <Navigate to="/login" />;
 };
 
 function AppRoutes() {
@@ -35,6 +35,7 @@ function AppRoutes() {
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
           <Route path="/orders" element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
           <Route path="/orders/:id" element={<PrivateRoute><OrderDetailPage /></PrivateRoute>} />
@@ -53,7 +54,9 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
-          <AppRoutes />
+          <WishlistProvider>
+            <AppRoutes />
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </Router>

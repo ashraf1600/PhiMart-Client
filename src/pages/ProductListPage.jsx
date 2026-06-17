@@ -3,15 +3,16 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { productService } from '../services/product';
 import { categoryService } from '../services/category';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import toast from 'react-hot-toast';
 
 const ProductListPage = () => {
   const [products, setProducts] = useState([]);
-  const [allProducts, setAllProducts] = useState([]); // store unfiltered products
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
   const categoryId = searchParams.get('category');
   const search = searchParams.get('search');
@@ -27,25 +28,21 @@ const ProductListPage = () => {
       const params = {};
       if (categoryId) params.category = categoryId;
       if (search) params.search = search;
-      
-      console.log('Fetching products with params:', params); // Debug log
+
+      console.log('Fetching products with params:', params);
 
       const data = await productService.getAll(params);
       let items = data.results || data;
 
-      // Normalize images
+      // Normalize images and stock status
       items.forEach(p => {
         p.display_image = p.main_image || p.images?.[0]?.image || null;
         p.in_stock = p.stock > 0;
       });
 
-      // Store all products for potential client-side filtering
-      setAllProducts(items);
-
-      // If backend filtering is not working, we'll filter on client side as fallback
+      // Client‑side filtering fallback (in case backend filter is not working)
       let filtered = items;
       if (categoryId) {
-        // Client-side filter by category (fallback)
         filtered = items.filter(p => p.category == categoryId);
       }
       if (search) {
@@ -76,7 +73,7 @@ const ProductListPage = () => {
     try {
       await addToCart(productId, 1);
       toast.success('Added to cart!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to add to cart');
     }
   };
@@ -131,7 +128,7 @@ const ProductListPage = () => {
         <div className="lg:col-span-3">
           {products.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No products found in this category.</p>
+              <p className="text-gray-500">No products found.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -144,23 +141,47 @@ const ProductListPage = () => {
                       ) : (
                         <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-4xl">👕</div>
                       )}
+                      {/* Stock badge */}
+                      {product.in_stock ? (
+                        <span className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          In Stock
+                        </span>
+                      ) : (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                          Out of Stock
+                        </span>
+                      )}
+                      {/* Wishlist heart */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleWishlist(product);
+                        }}
+                        className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-md hover:scale-110 transition"
+                      >
+                        {isInWishlist(product.id) ? '❤️' : '🤍'}
+                      </button>
                     </div>
                     <div className="p-4">
                       <h3 className="font-heading text-lg font-semibold truncate">{product.name}</h3>
                       <p className="text-sm text-gray-500">{product.category_name}</p>
                       <p className="text-xl font-bold mt-2">${product.price}</p>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAddToCart(product.id);
-                        }}
-                        className="mt-3 w-full bg-[#1a1a1a] text-white py-2 rounded-full text-sm hover:bg-[#b8a28c] transition"
-                      >
-                        Add to Cart
-                      </button>
                     </div>
                   </Link>
+                  <div className="px-4 pb-4">
+                    <button
+                      onClick={() => handleAddToCart(product.id)}
+                      disabled={!product.in_stock}
+                      className={`w-full py-2 rounded-full text-sm transition ${
+                        product.in_stock
+                          ? 'bg-[#1a1a1a] text-white hover:bg-[#b8a28c]'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {product.in_stock ? 'Add to Cart' : 'Out of Stock'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

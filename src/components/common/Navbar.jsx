@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 const Navbar = () => {
   const { user, logout, isAdmin } = useAuth();
   const { cartItemsCount } = useCart();
+  const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -42,12 +44,23 @@ const Navbar = () => {
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="container mx-auto px-6 flex justify-between items-center h-16">
         <Link to="/" className="text-2xl font-heading font-bold tracking-wider text-[#1a1a1a]">
-          EXPORT-MART
+          FASHION
         </Link>
 
         <div className="hidden md:flex items-center space-x-8">
           <Link to="/" className="nav-link">Home</Link>
           <Link to="/products" className="nav-link">Shop</Link>
+          
+          {/* Wishlist Icon with Count */}
+          <Link to="/wishlist" className="relative nav-link">
+            <span className="text-xl">❤️</span>
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-3 bg-[#b8a28c] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
+
           <Link to="/cart" className="relative nav-link">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.5 6M18 13l1.5 6M9 21h6M12 18v3" />
@@ -58,6 +71,7 @@ const Navbar = () => {
               </span>
             )}
           </Link>
+
           {isAdmin && (
             <button onClick={openAdminPanel} className="nav-btn text-sm">Admin</button>
           )}
@@ -78,6 +92,9 @@ const Navbar = () => {
                   </Link>
                   <Link to="/orders" className="block px-4 py-2 text-sm hover:bg-gray-50" onClick={() => setIsProfileDropdownOpen(false)}>
                     Orders
+                  </Link>
+                  <Link to="/wishlist" className="block px-4 py-2 text-sm hover:bg-gray-50" onClick={() => setIsProfileDropdownOpen(false)}>
+                    Wishlist ({wishlistCount})
                   </Link>
                   <hr className="my-1" />
                   <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
@@ -105,7 +122,12 @@ const Navbar = () => {
         <div className="md:hidden bg-white border-t border-gray-100 py-4 px-6">
           <Link to="/" className="block py-2 nav-link" onClick={() => setIsMenuOpen(false)}>Home</Link>
           <Link to="/products" className="block py-2 nav-link" onClick={() => setIsMenuOpen(false)}>Shop</Link>
-          <Link to="/cart" className="block py-2 nav-link" onClick={() => setIsMenuOpen(false)}>Cart ({cartItemsCount})</Link>
+          <Link to="/wishlist" className="block py-2 nav-link" onClick={() => setIsMenuOpen(false)}>
+            Wishlist ({wishlistCount})
+          </Link>
+          <Link to="/cart" className="block py-2 nav-link" onClick={() => setIsMenuOpen(false)}>
+            Cart ({cartItemsCount})
+          </Link>
           {isAdmin && <button onClick={() => { openAdminPanel(); setIsMenuOpen(false); }} className="block py-2 nav-link">Admin</button>}
           {user ? (
             <>
